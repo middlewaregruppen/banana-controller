@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/name: clusterrole
     app.kubernetes.io/instance: feature-viewer-role
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: banana-operator
-    app.kubernetes.io/part-of: banana-operator
+    app.kubernetes.io/created-by: banana-controller
+    app.kubernetes.io/part-of: banana-controller
     app.kubernetes.io/managed-by: kustomize
   name: feature-viewer-role
 rules:

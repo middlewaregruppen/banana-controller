@@ -31,9 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	helmv1 "github.com/k3s-io/helm-controller/pkg/apis/helm.cattle.io/v1"
-	bananav1alpha1 "github.com/middlewaregruppen/banana-operator/api/v1alpha1"
-	"github.com/middlewaregruppen/banana-operator/internal/controller"
+	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
+	"github.com/middlewaregruppen/banana-controller/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -47,7 +47,7 @@ func init() {
 
 	utilruntime.Must(bananav1alpha1.AddToScheme(scheme))
 
-	utilruntime.Must(helmv1.AddToScheme(scheme))
+	utilruntime.Must(argov1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -69,9 +69,9 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		//MetricsBindAddress:     metricsAddr,
+		//Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "502de5d2.mdlwr.se",

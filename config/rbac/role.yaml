@@ -5,6 +5,24 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - argoproj.io
+  resources:
+  - applications
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - argoproj.io
+  resources:
+  - applications/status
+  verbs:
+  - get
+- apiGroups:
   - banana.mdlwr.se
   resources:
   - featseturesets
@@ -82,21 +100,3 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - helm.cattle.io
-  resources:
-  - helmcharts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - helm.cattle.io
-  resources:
-  - helmcharts/status
-  verbs:
-  - get

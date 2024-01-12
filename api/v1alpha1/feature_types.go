@@ -17,11 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	//argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	//argo "github.com/argoproj/argo-cd/v2"
-	helmv1 "github.com/k3s-io/helm-controller/pkg/apis/helm.cattle.io/v1"
+	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//ktypes "sigs.k8s.io/kustomize/api/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -33,28 +30,35 @@ type FeatureSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name is the name of this feature
-	Helm helmv1.HelmChartSpec `json:"helm,omitempty"`
-	//ArgoCD argov1alpha1.ApplicationSpec `json:"argocd,omitempty"`
-	//Kustomize ktypes.Kustomization `json:"kustomization,omitempty"`
+	Name       string                       `json:"name,omitempty"`
+	Namespace  string                       `json:"namespace,omitempty"`
+	Project    string                       `json:"project,omitempty"`
+	Repo       string                       `json:"repo,omitempty"`
+	Path       string                       `json:"path,omitempty"`
+	Revision   string                       `json:"revision,omitempty"`
+	Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
+	SyncPolicy argov1alpha1.SyncPolicy      `json:"syncPolicy,omitempty"`
 }
 
 // FeatureStatus defines the observed state of Feature
 type FeatureStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Conditions      []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-	HelmChartStatus string             `json:"helmChartStatus,omitempty"`
+	Conditions   []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+	SyncStatus   string             `json:"syncStatus,omitempty"`
+	HealthStatus string             `json:"healthStatus,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/finalizers,verbs=update
-//+kubebuilder:rbac:groups=helm.cattle.io,resources=helmcharts,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=helm.cattle.io,resources=helmcharts/status,verbs=get
+//+kubebuilder:rbac:groups=argoproj.io,resources=applications,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=argoproj.io,resources=applications/status,verbs=get
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.helmChartStatus"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.syncStatus"
+// +kubebuilder:printcolumn:name="Health",type="string",JSONPath=".status.healthStatus"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Feature is the Schema for the features API

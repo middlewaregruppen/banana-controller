@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	bananav1alpha1 "github.com/middlewaregruppen/banana-operator/api/v1alpha1"
+	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

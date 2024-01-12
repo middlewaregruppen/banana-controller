@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	helmv1 "github.com/k3s-io/helm-controller/pkg/apis/helm.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,8 +33,7 @@ type FeatureSetSpec struct {
 }
 
 type IntermediateFeature struct {
-	Name string               `json:"name,omitempty"`
-	Helm helmv1.HelmChartSpec `json:"helm,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // FeatureSetStatus defines the observed state of FeatureSet

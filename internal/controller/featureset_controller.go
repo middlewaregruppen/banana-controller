@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	bananav1alpha1 "github.com/middlewaregruppen/banana-operator/api/v1alpha1"
+	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 )
 
 // Definitions to manage status conditions
@@ -82,9 +81,10 @@ func (r *FeatureSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Add finalizers that will be handled later during delete events
 	if !controllerutil.ContainsFinalizer(featset, featureSetFinalizers) {
-		if ok := controllerutil.AddFinalizer(featset, featureSetFinalizers); !ok {
-			return ctrl.Result{Requeue: true}, nil
-		}
+		// if ok := controllerutil.AddFinalizer(featset, featureSetFinalizers); !ok {
+		// 	return ctrl.Result{Requeue: true}, nil
+		// }
+		controllerutil.AddFinalizer(featset, featureSetFinalizers)
 		if err = r.Update(ctx, featset); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -168,7 +168,7 @@ func (r *FeatureSetReconciler) ensureFeatures(ctx context.Context, feature *bana
 
 	if needsUpdate(feature, currentFeat) {
 		l.Info("feature needs updating", "name", feature.Name)
-		currentFeat.Spec.Helm = feature.Spec.Helm
+		//currentFeat.Spec.Helm = feature.Spec.Helm
 		return r.Update(ctx, currentFeat)
 	}
 
@@ -231,9 +231,9 @@ func applyRuntimeObject(ctx context.Context, key client.ObjectKey, obj client.Ob
 }
 
 func needsUpdate(generated, current *bananav1alpha1.Feature) bool {
-	if !reflect.DeepEqual(generated.Spec.Helm, current.Spec.Helm) {
-		return true
-	}
+	// if !reflect.DeepEqual(generated.Spec.Helm, current.Spec.Helm) {
+	// 	return true
+	// }
 	return false
 }
 
@@ -244,7 +244,7 @@ func (r *FeatureSetReconciler) decorateFeatureWith(featureset *bananav1alpha1.Fe
 			Namespace: featureset.Namespace,
 		},
 		Spec: bananav1alpha1.FeatureSpec{
-			Helm: intermediate.Helm,
+			//Helm: intermediate.Helm,
 		},
 	}
 }
