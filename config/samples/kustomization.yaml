@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- banana_v1alpha1_featureset.yaml
+- banana_v1alpha1_feature.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

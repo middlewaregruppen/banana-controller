@@ -1,0 +1,12 @@
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: Feature
+metadata:
+  labels:
+    app.kubernetes.io/name: feature
+    app.kubernetes.io/instance: feature-sample
+    app.kubernetes.io/part-of: banana-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: banana-operator
+  name: feature-sample
+spec:
+  # TODO(user): Add fields here

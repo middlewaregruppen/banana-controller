@@ -1,0 +1,102 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featseturesets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featseturesets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featseturesets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - features
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - features/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - features/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featuressets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featuressets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featuressets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - helm.cattle.io
+  resources:
+  - helmcharts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - helm.cattle.io
+  resources:
+  - helmcharts/status
+  verbs:
+  - get
