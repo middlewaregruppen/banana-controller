@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -38,6 +39,17 @@ import (
 )
 
 var (
+	// VERSION of the app. Is set when project is built and should never be set manually
+	VERSION string
+	// COMMIT is the Git commit currently used when compiling. Is set when project is built and should never be set manually
+	COMMIT string
+	// BRANCH is the Git branch currently used when compiling. Is set when project is built and should never be set manually
+	BRANCH string
+	// GOVERSION used to compile. Is set when project is built and should never be set manually
+	GOVERSION string
+	// DATE used to compile. Is set when project is built and should never be set manually
+	DATE string
+
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -52,9 +64,12 @@ func init() {
 }
 
 func main() {
+	var printVersion bool
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	flag.BoolVar(&printVersion, "version", false, "Print version")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -65,6 +80,15 @@ func main() {
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
+
+	if printVersion {
+		fmt.Printf("version: %v\n", VERSION)
+		fmt.Printf("commit: %s\n", COMMIT)
+		fmt.Printf("branch: %s\n", BRANCH)
+		fmt.Printf("go version: %s\n", GOVERSION)
+		fmt.Printf("built: %s\n", DATE)
+		os.Exit(1)
+	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

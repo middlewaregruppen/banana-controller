@@ -119,8 +119,8 @@ func (r *FeatureSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			meta.SetStatusCondition(&featset.Status.Conditions, readyCondition)
 			err = lErr
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 60}, err
 		}
-		return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 60}, err
 	}
 
 	r.setReadyStatys(ctx, featset)

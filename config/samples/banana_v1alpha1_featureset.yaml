@@ -1,55 +1,11 @@
 apiVersion: banana.mdlwr.se/v1alpha1
 kind: FeatureSet
 metadata:
-  labels:
-    app.kubernetes.io/name: featureset
-    app.kubernetes.io/instance: featureset-sample
-    app.kubernetes.io/part-of: banana-controller
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: banana-controller
   name: featureset-sample
   namespace: infra
 spec:
-  # features:
-  # - name: apache
-  #   helm:
-  #     repo: https://charts.bitnami.com/bitnami
-  #     chart: apache
-  #     targetNamespace: infra
-  #     valuesContent: |-
-  #       service:
-  #         type: ClusterIP
-  #       ingress:
-  #         enabled: true
-  #         hostname: www.example.com
-  #       metrics:
-  #         enabled: true
   features:
-  - name: prometheus
-    helm:
-      interval: 10m
-      timeout: 5m
-      chart:
-        spec:
-          chart: prometheus
-          sourceRef:
-            kind: HelmRepository
-            name: bitnami
-          interval: 5m
-      releaseName: prometheus
-      install:
-        remediation:
-          retries: 3
-      upgrade:
-        remediation:
-          retries: 3
-      test:
-        enable: true
-      driftDetection:
-        mode: enabled
-        ignore:
-        - paths: ["/spec/replicas"]
-          target:
-            kind: Deployment
-      values:
-        replicaCount: 2
+   - namespace: prometheus
+     repo: https://charts.bitnami.com/bitnami
+     name: prometheus
+     revision: 0.7.0

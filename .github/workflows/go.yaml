@@ -1,0 +1,57 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  staticcheck:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.21
+
+    - name: Go Vet
+      run: make vet
+    - name: Go CI Lint
+      run: make lint
+    - name: Staticcheck
+      run: make staticcheck
+      
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.21
+
+    - name: Test
+      run: make test
+    - name: Race
+      run: make race
+    - name: Benchmark
+      run: make benchmark
+    - name: Coverage
+      run: make coverage
+      
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.21
+    
+    - name: Compile
+      run: make

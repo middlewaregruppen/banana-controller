@@ -94,6 +94,32 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
+DATE    ?= $(shell date +%FT%T%z)
+MODULE   = $(shell env GO111MODULE=on $(GO) list -m)
+VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || \
+			cat $(CURDIR)/.version 2> /dev/null || echo v0)
+COMMIT=$(shell git rev-parse HEAD)
+BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+GOVERSION=$(shell go version | awk -F\go '{print $$3}' | awk '{print $$1}')
+GO			 = go
+M = $(shell printf "\033[34;1m➜\033[0m")
+PKGS     = $(or $(PKG),$(shell env GO111MODULE=on $(GO) list ./...))
+BIN      = $(CURDIR)/bin
+TBIN		 = $(CURDIR)/test/bin
+BUILDPATH ?= $(BIN)/$(shell basename $(MODULE))
+$(TBIN):
+	@mkdir -p $@
+$(TBIN)/%: | $(TBIN) ; $(info $(M) building $(PACKAGE))
+	$Q tmp=$$(mktemp -d); \
+	   env GOBIN=$(TBIN) $(GO) install $(PACKAGE) \
+		|| ret=$$?; \
+	   #rm -rf $$tmp ; exit $$ret
+
+GOCILINT = $(TBIN)/golangci-lint
+$(TBIN)/golangci-lint: PACKAGE=github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+
+GOSTATICCHECK = $(TBIN)/staticcheck
+$(TBIN)/staticcheck: PACKAGE=honnef.co/go/tools/cmd/staticcheck@v0.4.6
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -104,26 +130,56 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
+fmt: ; $(info $(M) running go fmt) ## Run go fmt against code.
+	$(GO) fmt ./...
 
 .PHONY: vet
-vet: ## Run go vet against code.
-	go vet ./...
+vet: ; $(info $(M) running go vet) ## Run go vet against code.
+	$(GO) vet ./...
+
+.PHONY: race
+race: ; $(info $(M) running go race) @ ## Runs tests with data race detection
+	$Q CGO_ENABLED=1 $(GO) test -race -short $(PKGS)
+
+.PHONY: benchmark
+benchmark: ; $(info $(M) running go benchmark test) @ ## Benchmark tests to examine performance
+	$Q $(GO) test -run=__absolutelynothing__ -bench=. $(PKGS)
+
+.PHONY: coverage
+coverage: ; $(info $(M) running go coverage) @ ## Runs tests and generates code coverage report at ./test/coverage.out
+	$Q mkdir -p $(CURDIR)/test/
+	$Q $(GO) test -coverprofile="$(CURDIR)/test/coverage.out" $(PKGS)
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
+.PHONY: staticcheck
+staticcheck: | $(GOSTATICCHECK) ; $(info $(M) running go-staticcheck) ## Run go-staticcheck linter
+	$Q $(GOSTATICCHECK) ./...
+
+.PHONY: lint
+lint: | $(GOCILINT) ; $(info $(M) running golangci-lint) @ ## Runs static code analysis using golangci-lint
+	$Q $(GOCILINT) run
+
+.PHONY: clean
+clean: ; $(info $(M) cleaning)	@ ## Cleanup everything
+	@rm -rfv $(BIN)
+	@rm -rfv $(TBIN)
+	@rm -rfv $(CURDIR)/test
+	
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
-	go build -o bin/manager cmd/main.go
+build: | $(BIN) ; $(info $(M) building executable to $(BUILDPATH)) @ ## Build program binary
+	$Q $(GO) build \
+		-tags release \
+		-ldflags '-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH} -X main.GOVERSION=${GOVERSION} -X main.DATE=${DATE}' \
+		-o $(BUILDPATH) cmd/main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./cmd/main.go
+run: manifests generate fmt vet ; $(info $(M) running controller on localhost) ## Run a controller from your host.
+	$Q $(GO) run ./cmd/main.go
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
@@ -149,7 +205,7 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
 	- $(CONTAINER_TOOL) buildx create --name project-v3-builder
 	$(CONTAINER_TOOL) buildx use project-v3-builder
-	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
+	- $(CONTAINER_TOOL) buildx build --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
 	- $(CONTAINER_TOOL) buildx rm project-v3-builder
 	rm Dockerfile.cross
 
