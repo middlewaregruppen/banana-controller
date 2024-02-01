@@ -1,26 +1,32 @@
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  annotations:
-    cluster-name: hubble-dev
-  labels:
-    app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: banana-controller
-    app.kubernetes.io/instance: controller-manager
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: deployment 
-    app.kubernetes.io/part-of: banana-controller
-  name: banana-controller
-  namespace: banana-system
-spec:
-  endpoints:
-  - path: /metrics
-    port: https
-    scheme: https
-    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    tlsConfig:
-      insecureSkipVerify: true
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: kube-rbac-proxy
-      app.kubernetes.io/name: banana-controller-metrics-service
+# 
+# Uncomment to enable monitoring of the controller and start scraping Prometheus metrics.
+# This resource requires the prometheus-operator to be installed in the cluster. 
+# Please see https://github.com/prometheus-operator/prometheus-operator/ for more information
+# 
+#
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   annotations:
+#     cluster-name: hubble-dev
+#   labels:
+#     app.kubernetes.io/component: manager
+#     app.kubernetes.io/created-by: banana-controller
+#     app.kubernetes.io/instance: controller-manager
+#     app.kubernetes.io/managed-by: kustomize
+#     app.kubernetes.io/name: deployment 
+#     app.kubernetes.io/part-of: banana-controller
+#   name: banana-controller
+#   namespace: banana-system
+# spec:
+#   endpoints:
+#   - path: /metrics
+#     port: https
+#     scheme: https
+#     bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+#     tlsConfig:
+#       insecureSkipVerify: true
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/component: kube-rbac-proxy
+#       app.kubernetes.io/name: banana-controller-metrics-service
