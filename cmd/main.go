@@ -92,6 +92,9 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	// Log version info to stdout
+	setupLog.Info("version info", "version", VERSION, "commit", COMMIT, "branch", BRANCH, "go-version", GOVERSION, "build-date", DATE)
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		//MetricsBindAddress:     metricsAddr,

@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,6 +80,8 @@ func logError(feature *bananav1alpha1.Feature, s string, l logr.Logger, err erro
 	l.Error(err, s)
 }
 
+type bananaTraceIdKey string
+
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/finalizers,verbs=update
@@ -93,7 +96,11 @@ func logError(feature *bananav1alpha1.Feature, s string, l logr.Logger, err erro
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
+	uid, _ := shortid.Generate()
+	k := bananaTraceIdKey("banana-trace-id")
+
+	ctx = context.WithValue(ctx, k, uid)
+	l := log.FromContext(ctx).WithName(uid)
 
 	// Fetch FeatureSet - This ensures that the cluster has resources of type Feature.
 	// Stops reconciliation if not found, for example if the CRD's has not been applied
@@ -113,10 +120,10 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 	}
 
+	// TODO: Deleted resources can't be updated
 	defer func() {
 		// Update resource
 		if err := r.Status().Update(ctx, feat); err != nil {
-			//l.Error(err, "Failed updating status")
 			logError(feat, "failed updating status", l, err)
 		}
 	}()
@@ -151,8 +158,6 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1alpha1.Feature) {
-	l := log.FromContext(ctx)
-	l.Info("all Argo Applications are in ready state")
 	readyCondition := metav1.Condition{
 		Status:             metav1.ConditionTrue,
 		Reason:             ReasonReconciliationSucceeded,
@@ -164,16 +169,17 @@ func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1al
 }
 
 func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature) error {
-
-	l := log.FromContext(ctx)
+	k := bananaTraceIdKey("banana-trace-id")
+	l := log.FromContext(ctx).WithName(ctx.Value(k).(string))
 
 	// Get the Argo App by it's name. Create an app if nothing is found
+	l.Info("will try to get Application", "name", feature.Name, "Namespace", feature.Namespace)
 	currentApp, err := r.getArgoApp(ctx, types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace})
 	if err != nil {
 		return err
 	}
 	if currentApp == nil {
-		l.Info("current Application is not present, creating a new one", "name", feature.Name)
+		l.Info("current Application not found. It probably doesn't exist, creating a new one", "name", feature.Name, "namespace", feature.Namespace)
 		feature.Status.SyncStatus = ArgoApplicationStatusProgressing
 		newApp := r.constructArgoApp(feature)
 		if err := controllerutil.SetControllerReference(feature, newApp, r.Scheme); err != nil {
@@ -196,7 +202,7 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 
 	// Check if the Argo App needs updating by comparing their Specs
 	if r.needsUpdate(r.constructArgoApp(feature), currentApp) {
-		l.Info("application needs updating", "name", feature.Name)
+		l.Info("application needs updating", "name", feature.Name, "namespace", feature.Namespace)
 		currentApp.Spec = r.constructArgoApp(feature).Spec
 		return r.Update(ctx, currentApp)
 	}
@@ -242,8 +248,6 @@ func (r *FeatureReconciler) needsUpdate(old, new *argov1alpha1.Application) bool
 }
 
 func (r *FeatureReconciler) getArgoApp(ctx context.Context, name types.NamespacedName) (*argov1alpha1.Application, error) {
-	l := log.FromContext(ctx)
-	l.Info("Getting Application")
 	argoapp := &argov1alpha1.Application{}
 	err := r.Get(ctx, name, argoapp)
 	if err != nil {
