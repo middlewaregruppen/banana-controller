@@ -535,7 +535,7 @@ rules:
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets
+  - featuresets
   verbs:
   - create
   - delete
@@ -547,13 +547,13 @@ rules:
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets/finalizers
+  - featuresets/finalizers
   verbs:
   - update
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets/status
+  - featuresets/status
   verbs:
   - get
   - patch
@@ -619,8 +619,8 @@ roleRef:
   name: banana-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: banana-controller
+  namespace: banana-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -659,8 +659,8 @@ roleRef:
   name: banana-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  name: banana-controller
+  namespace: banana-system
 ---
 apiVersion: v1
 kind: Service
@@ -716,6 +716,7 @@ spec:
         - --logtostderr=true
         - --v=0
         image: harbor.vgregion.se/infra/kube-rbac-proxy:v0.14.0
+        imagePullPolicy: Always
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -740,6 +741,7 @@ spec:
         command:
         - /banana-controller
         image: ghcr.io/amimof/banana-controller:v1.0.0-beta.1
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /healthz
