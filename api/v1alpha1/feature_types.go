@@ -44,9 +44,12 @@ type FeatureSpec struct {
 type FeatureStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Conditions   []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-	SyncStatus   string             `json:"syncStatus,omitempty"`
-	HealthStatus string             `json:"healthStatus,omitempty"`
+	Conditions    []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+	SyncStatus    string             `json:"syncStatus,omitempty"`
+	HealthStatus  string             `json:"healthStatus,omitempty"`
+	URLs          []string           `json:"url,omitempty"`
+	Images        []string           `json:"images,omitempty"`
+	NeedsUpdating bool               `json:"needsUpdating,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
@@ -59,6 +62,7 @@ type FeatureStatus struct {
 //+kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.syncStatus"
 // +kubebuilder:printcolumn:name="Health",type="string",JSONPath=".status.healthStatus"
+// +kubebuilder:printcolumn:name="URL",type="string",JSONPath=".status.url[0]"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // Feature is the Schema for the features API

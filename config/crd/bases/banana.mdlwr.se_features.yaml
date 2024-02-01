@@ -21,6 +21,9 @@ spec:
     - jsonPath: .status.healthStatus
       name: Health
       type: string
+    - jsonPath: .status.url[0]
+      name: URL
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -221,8 +224,18 @@ spec:
                 type: array
               healthStatus:
                 type: string
+              images:
+                items:
+                  type: string
+                type: array
+              needsUpdating:
+                type: boolean
               syncStatus:
                 type: string
+              url:
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true

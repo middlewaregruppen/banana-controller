@@ -4,6 +4,7 @@ metadata:
   name: featureset-sample
   namespace: infra
 spec:
+  valuesFile: 
   features:
    - namespace: prometheus
      repo: https://charts.bitnami.com/bitnami

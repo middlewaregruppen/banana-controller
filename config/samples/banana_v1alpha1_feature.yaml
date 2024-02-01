@@ -1,6 +1,9 @@
+---
 apiVersion: banana.mdlwr.se/v1alpha1
 kind: Feature
 metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: 'banana-lab-features:/Namespace:argocd/banana-controller-system'
   labels:
     app.kubernetes.io/name: banana-prometheus
     app.kubernetes.io/part-of: banana-controller
@@ -13,3 +16,29 @@ spec:
   repo: https://charts.bitnami.com/bitnami
   name: prometheus
   revision: 0.7.0
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+--- 
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: Feature
+metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: 'banana-lab-features:/Namespace:argocd/banana-controller-system'
+  labels:
+    app.kubernetes.io/name: banana-redis
+    app.kubernetes.io/part-of: banana-controller
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/created-by: banana-controller
+  name: banana-redis
+  namespace: argocd
+spec:
+  namespace: redis
+  repo: https://charts.bitnami.com/bitnami
+  name: redis
+  revision: 18.11.0
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true

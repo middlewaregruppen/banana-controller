@@ -191,6 +191,8 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 	// Update statuses
 	feature.Status.SyncStatus = string(currentApp.Status.Sync.Status)
 	feature.Status.HealthStatus = string(currentApp.Status.Health.Status)
+	feature.Status.Images = currentApp.Status.Summary.Images
+	feature.Status.URLs = currentApp.Status.Summary.ExternalURLs
 
 	// Check if the Argo App needs updating by comparing their Specs
 	if r.needsUpdate(r.constructArgoApp(feature), currentApp) {

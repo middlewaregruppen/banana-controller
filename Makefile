@@ -171,7 +171,7 @@ clean: ; $(info $(M) cleaning)	@ ## Cleanup everything
 ##@ Build
 
 .PHONY: build
-build: | $(BIN) ; $(info $(M) building executable to $(BUILDPATH)) @ ## Build program binary
+build: manifests generate fmt vet | $(BIN) ; $(info $(M) building executable to $(BUILDPATH)) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH} -X main.GOVERSION=${GOVERSION} -X main.DATE=${DATE}' \
