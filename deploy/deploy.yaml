@@ -327,7 +327,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
-        image: harbor.vgregion.se/infra/kube-rbac-proxy:v0.14.0
+        image: quay.io/brancz/kube-rbac-proxy:v0.14.4
         imagePullPolicy: Always
         name: kube-rbac-proxy
         ports:
@@ -352,7 +352,7 @@ spec:
         - --leader-elect
         command:
         - /banana-controller
-        image: ghcr.io/amimof/banana-controller:v1.0.0-beta.1
+        image: ghcr.io/amimof/banana-controller:v1.0.0-beta.3
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
