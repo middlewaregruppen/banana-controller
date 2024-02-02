@@ -1,0 +1,19 @@
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: Layer
+metadata:
+  name: nginx-default-wildcard-certificate
+spec:
+  match:
+    repo: https://charts.bitnami.com/bitnami
+    name: nginx-ingress-controller
+  values:
+    args:
+    - '--default-backend-service=$(POD_NAMESPACE)/nginx-nginx-ingress-controller-default-backend'
+    - '--http-port=8080'
+    - '--https-port=8443'
+    - '--healthz-port=10254'
+    - '--election-id=ingress-controller-leader'
+    - '--controller-class=k8s.io/ingress-nginx'
+    - '--configmap=$(POD_NAMESPACE)/nginx-nginx-ingress-controller'
+    - '--publish-service=$(POD_NAMESPACE)/ingress-nginx-controller'
+    - '--default-ssl-certificate=$(POD_NAMESPACE)/vgr-wildcard-cert'

@@ -100,3 +100,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - layers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - layers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - layers/status
+  verbs:
+  - get
+  - patch
+  - update

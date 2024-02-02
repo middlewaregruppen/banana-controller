@@ -1,0 +1,27 @@
+# permissions for end users to view layers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: layer-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: banana-controller
+    app.kubernetes.io/part-of: banana-controller
+    app.kubernetes.io/managed-by: kustomize
+  name: layer-viewer-role
+rules:
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - layers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - layers/status
+  verbs:
+  - get

@@ -228,6 +228,10 @@ spec:
                 items:
                   type: string
                 type: array
+              layerRef:
+                items:
+                  type: string
+                type: array
               needsUpdating:
                 type: boolean
               syncStatus:
