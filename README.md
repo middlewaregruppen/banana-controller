@@ -1,8 +1,8 @@
 # banana-controller
-// TODO(user): Add simple overview of use/purpose
+Banana is a pattern which allows teams to utilize Kubernetes services through GitOps but without all the complexities it would otherwise introduce. It creates an abstraction layer that enables teams declaratively describe services they want to use, without beeing invasive.  
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+GitOps is awesome, tools like ArgoCD and Flux are amazing and we love them. But many teams struggle 
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
