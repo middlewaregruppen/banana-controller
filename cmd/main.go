@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+
 	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 	"github.com/middlewaregruppen/banana-controller/internal/controller"
 	//+kubebuilder:scaffold:imports
@@ -131,6 +132,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feature")
+		os.Exit(1)
+	}
+	if err = (&controller.FeatureOverrideReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "FeatureOverride")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -102,7 +102,7 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	ctx = context.WithValue(ctx, k, uid)
 	l := log.FromContext(ctx).WithName(uid)
 
-	// Fetch FeatureSet - This ensures that the cluster has resources of type Feature.
+	// Fetch Feature - This ensures that the cluster has resources of type Feature.
 	// Stops reconciliation if not found, for example if the CRD's has not been applied
 	feat := &bananav1alpha1.Feature{}
 	if err := r.Get(ctx, req.NamespacedName, feat); err != nil {
@@ -130,12 +130,18 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// Run finalizers if resource is marked as deleted
 	if !feat.ObjectMeta.DeletionTimestamp.IsZero() {
-		l.Info("Deleting")
+		l.Info("resource is marked for deletion, running finalizers", "name", feat.Name, "namespace", feat.Namespace)
 		return ctrl.Result{}, r.finalize(ctx, feat)
 	}
 
+	// Apply layers if any matches. Errors will be ignore because we don't want to stop reconciling
+	layers, err := r.ensureLayers(ctx, feat)
+	if err != nil {
+		logError(feat, "failed ensuring layers, will continue to reconcile and ignore applying layers to this feature", l, err)
+	}
+
 	// Check if Argo Application exists, if not create a new one
-	err := r.ensureArgoApp(ctx, feat)
+	err = r.ensureArgoApp(ctx, feat, layers)
 	if err != nil {
 		logError(feat, "could not reconcile Application", l, err)
 		err = fmt.Errorf("could not reconcile Application: %w", err)
@@ -168,10 +174,27 @@ func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1al
 	meta.SetStatusCondition(&feat.Status.Conditions, readyCondition)
 }
 
-func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature) error {
+func (r *FeatureReconciler) ensureLayers(ctx context.Context, feature *bananav1alpha1.Feature) ([]*bananav1alpha1.FeatureOverride, error) {
+	layers := bananav1alpha1.FeatureOverrideList{}
+	err := r.List(ctx, &layers)
+	if err != nil {
+		return nil, err
+	}
+
+	var lres []*bananav1alpha1.FeatureOverride
+	if layers.Items != nil {
+		for _, l := range layers.Items {
+			if l.Spec.Match.Name == feature.Spec.Name && l.Spec.Match.Repo == feature.Spec.Repo {
+				lres = append(lres, &l)
+			}
+		}
+	}
+	return lres, nil
+}
+
+func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) error {
 	k := bananaTraceIdKey("banana-trace-id")
 	l := log.FromContext(ctx).WithName(ctx.Value(k).(string))
-
 	// Get the Argo App by it's name. Create an app if nothing is found
 	l.Info("will try to get Application", "name", feature.Name, "Namespace", feature.Namespace)
 	currentApp, err := r.getArgoApp(ctx, types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace})
@@ -181,7 +204,7 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 	if currentApp == nil {
 		l.Info("current Application not found. It probably doesn't exist, creating a new one", "name", feature.Name, "namespace", feature.Namespace)
 		feature.Status.SyncStatus = ArgoApplicationStatusProgressing
-		newApp := r.constructArgoApp(feature)
+		newApp := r.constructArgoApp(feature, layers)
 		if err := controllerutil.SetControllerReference(feature, newApp, r.Scheme); err != nil {
 			return err
 		}
@@ -190,31 +213,72 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 			feature.Status.SyncStatus = ArgoApplicationStatusDegraded
 			return err
 		}
-
 		return nil
 	}
 
-	// Update statuses
-	feature.Status.SyncStatus = string(currentApp.Status.Sync.Status)
-	feature.Status.HealthStatus = string(currentApp.Status.Health.Status)
-	feature.Status.Images = currentApp.Status.Summary.Images
-	feature.Status.URLs = currentApp.Status.Summary.ExternalURLs
-
 	// Check if the Argo App needs updating by comparing their Specs
-	if r.needsUpdate(r.constructArgoApp(feature), currentApp) {
+	newApp := r.constructArgoApp(feature, layers)
+	if r.needsUpdate(newApp, currentApp) {
 		l.Info("application needs updating", "name", feature.Name, "namespace", feature.Namespace)
-		currentApp.Spec = r.constructArgoApp(feature).Spec
+		currentApp.Spec = newApp.Spec
 		return r.Update(ctx, currentApp)
 	}
+
+	// Update statuses
+	updateStatus(feature, currentApp, layers)
 
 	return nil
 }
 
-func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature) *argov1alpha1.Application {
+func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application, layers []*bananav1alpha1.FeatureOverride) {
+	// Update statuses
+	feature.Status.SyncStatus = string(app.Status.Sync.Status)
+	feature.Status.HealthStatus = string(app.Status.Health.Status)
+	feature.Status.Images = app.Status.Summary.Images
+	feature.Status.URLs = app.Status.Summary.ExternalURLs
+
+	// Update LayerRef status
+	var refs []string
+	for _, f := range layers {
+		refs = append(refs, f.Name)
+	}
+	feature.Status.LayerRef = refs
+}
+
+func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) *argov1alpha1.Application {
 	proj := feature.Spec.Project
 	if len(feature.Spec.Project) == 0 {
 		proj = "default"
 	}
+
+	// First item in list is the chart itself
+	sources := []argov1alpha1.ApplicationSource{
+		{
+			RepoURL:        feature.Spec.Repo,
+			Path:           feature.Spec.Path,
+			Chart:          feature.Spec.Name,
+			TargetRevision: feature.Spec.Revision,
+			Helm: &argov1alpha1.ApplicationSourceHelm{
+				Parameters: feature.Spec.Values,
+			},
+		},
+	}
+
+	// Next, we add additional layers
+	for _, l := range layers {
+		layer := argov1alpha1.ApplicationSource{
+			RepoURL:        feature.Spec.Repo,
+			Path:           feature.Spec.Path,
+			Chart:          feature.Spec.Name,
+			TargetRevision: feature.Spec.Revision,
+			Helm: &argov1alpha1.ApplicationSourceHelm{
+				ValuesObject: l.Spec.Values,
+			},
+		}
+		sources = append(sources, layer)
+	}
+
+	// Return the constructed multi-source argocd application
 	return &argov1alpha1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      feature.Name,
@@ -229,15 +293,16 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature) *a
 				Namespace: feature.Spec.Namespace,
 				Server:    "https://kubernetes.default.svc",
 			},
-			Source: &argov1alpha1.ApplicationSource{
-				RepoURL:        feature.Spec.Repo,
-				Path:           feature.Spec.Path,
-				Chart:          feature.Spec.Name,
-				TargetRevision: feature.Spec.Revision,
-				Helm: &argov1alpha1.ApplicationSourceHelm{
-					Parameters: feature.Spec.Values,
-				},
-			},
+			// Source: &argov1alpha1.ApplicationSource{
+			// 	RepoURL:        feature.Spec.Repo,
+			// 	Path:           feature.Spec.Path,
+			// 	Chart:          feature.Spec.Name,
+			// 	TargetRevision: feature.Spec.Revision,
+			// 	Helm: &argov1alpha1.ApplicationSourceHelm{
+			// 		Parameters: feature.Spec.Values,
+			// 	},
+			// },
+			Sources:    sources,
 			SyncPolicy: &feature.Spec.SyncPolicy,
 		},
 	}

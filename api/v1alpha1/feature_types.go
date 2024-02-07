@@ -50,6 +50,7 @@ type FeatureStatus struct {
 	URLs          []string           `json:"url,omitempty"`
 	Images        []string           `json:"images,omitempty"`
 	NeedsUpdating bool               `json:"needsUpdating,omitempty"`
+	LayerRef      []string           `json:"layerRef,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete

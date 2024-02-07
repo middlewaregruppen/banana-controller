@@ -1,0 +1,27 @@
+# permissions for end users to view featureoverrides.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: featureoverride-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: banana-controller
+    app.kubernetes.io/part-of: banana-controller
+    app.kubernetes.io/managed-by: kustomize
+  name: featureoverride-viewer-role
+rules:
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featureoverrides
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featureoverrides/status
+  verbs:
+  - get
