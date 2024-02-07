@@ -38,4 +38,13 @@ resources:
   kind: Layer
   path: github.com/middlewaregruppen/banana-controller/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: mdlwr.se
+  group: banana
+  kind: FeatureOverride
+  path: github.com/middlewaregruppen/banana-controller/api/v1alpha1
+  version: v1alpha1
 version: "3"

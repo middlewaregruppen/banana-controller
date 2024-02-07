@@ -27,26 +27,26 @@ import (
 	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 )
 
-// LayerReconciler reconciles a Layer object
-type LayerReconciler struct {
+// FeatureOverrideReconciler reconciles a FeatureOverride object
+type FeatureOverrideReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=layers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=layers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=layers/finalizers,verbs=update
+//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the Layer object against the actual cluster state, and then
+// the FeatureOverride object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
-func (r *LayerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *FeatureOverrideReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -55,8 +55,8 @@ func (r *LayerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *LayerReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FeatureOverrideReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&bananav1alpha1.Layer{}).
+		For(&bananav1alpha1.FeatureOverride{}).
 		Complete(r)
 }

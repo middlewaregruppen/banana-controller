@@ -51,6 +51,32 @@ rules:
 - apiGroups:
   - banana.mdlwr.se
   resources:
+  - featureoverrides
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featureoverrides/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
+  - featureoverrides/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - banana.mdlwr.se
+  resources:
   - features
   verbs:
   - create
@@ -96,32 +122,6 @@ rules:
   - banana.mdlwr.se
   resources:
   - featuressets/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - banana.mdlwr.se
-  resources:
-  - layers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - banana.mdlwr.se
-  resources:
-  - layers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - banana.mdlwr.se
-  resources:
-  - layers/status
   verbs:
   - get
   - patch

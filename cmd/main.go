@@ -134,11 +134,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Feature")
 		os.Exit(1)
 	}
-	if err = (&controller.LayerReconciler{
+	if err = (&controller.FeatureOverrideReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Layer")
+		setupLog.Error(err, "unable to create controller", "controller", "FeatureOverride")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

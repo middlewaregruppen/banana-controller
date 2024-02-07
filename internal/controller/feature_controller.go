@@ -174,14 +174,14 @@ func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1al
 	meta.SetStatusCondition(&feat.Status.Conditions, readyCondition)
 }
 
-func (r *FeatureReconciler) ensureLayers(ctx context.Context, feature *bananav1alpha1.Feature) ([]*bananav1alpha1.Layer, error) {
-	layers := bananav1alpha1.LayerList{}
+func (r *FeatureReconciler) ensureLayers(ctx context.Context, feature *bananav1alpha1.Feature) ([]*bananav1alpha1.FeatureOverride, error) {
+	layers := bananav1alpha1.FeatureOverrideList{}
 	err := r.List(ctx, &layers)
 	if err != nil {
 		return nil, err
 	}
 
-	var lres []*bananav1alpha1.Layer
+	var lres []*bananav1alpha1.FeatureOverride
 	if layers.Items != nil {
 		for _, l := range layers.Items {
 			if l.Spec.Match.Name == feature.Spec.Name && l.Spec.Match.Repo == feature.Spec.Repo {
@@ -192,7 +192,7 @@ func (r *FeatureReconciler) ensureLayers(ctx context.Context, feature *bananav1a
 	return lres, nil
 }
 
-func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature, layers []*bananav1alpha1.Layer) error {
+func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) error {
 	k := bananaTraceIdKey("banana-trace-id")
 	l := log.FromContext(ctx).WithName(ctx.Value(k).(string))
 	// Get the Argo App by it's name. Create an app if nothing is found
@@ -230,7 +230,7 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 	return nil
 }
 
-func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application, layers []*bananav1alpha1.Layer) {
+func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application, layers []*bananav1alpha1.FeatureOverride) {
 	// Update statuses
 	feature.Status.SyncStatus = string(app.Status.Sync.Status)
 	feature.Status.HealthStatus = string(app.Status.Health.Status)
@@ -245,7 +245,7 @@ func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application
 	feature.Status.LayerRef = refs
 }
 
-func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, layers []*bananav1alpha1.Layer) *argov1alpha1.Application {
+func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) *argov1alpha1.Application {
 	proj := feature.Spec.Project
 	if len(feature.Spec.Project) == 0 {
 		proj = "default"

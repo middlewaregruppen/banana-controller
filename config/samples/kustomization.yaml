@@ -3,4 +3,5 @@ resources:
 - banana_v1alpha1_featureset.yaml
 - banana_v1alpha1_feature.yaml
 - banana_v1alpha1_layer.yaml
+- banana_v1alpha1_featureoverride.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

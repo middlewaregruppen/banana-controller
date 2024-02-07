@@ -1,0 +1,12 @@
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: FeatureOverride
+metadata:
+  labels:
+    app.kubernetes.io/name: featureoverride
+    app.kubernetes.io/instance: featureoverride-sample
+    app.kubernetes.io/part-of: banana-controller
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: banana-controller
+  name: featureoverride-sample
+spec:
+  # TODO(user): Add fields here

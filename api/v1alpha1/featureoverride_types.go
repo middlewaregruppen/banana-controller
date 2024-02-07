@@ -24,8 +24,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// LayerSpec defines the desired state of Layer
-type LayerSpec struct {
+// FeatureOverrideSpec defines the desired state of FeatureOverride
+type FeatureOverrideSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -42,8 +42,8 @@ type Match struct {
 	Revision  string `json:"revision,omitempty"`
 }
 
-// LayerStatus defines the observed state of Layer
-type LayerStatus struct {
+// FeatureOverrideStatus defines the observed state of FeatureOverride
+type FeatureOverrideStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -51,24 +51,24 @@ type LayerStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Layer is the Schema for the layers API
-type Layer struct {
+// FeatureOverride is the Schema for the featureoverrides API
+type FeatureOverride struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   LayerSpec   `json:"spec,omitempty"`
-	Status LayerStatus `json:"status,omitempty"`
+	Spec   FeatureOverrideSpec   `json:"spec,omitempty"`
+	Status FeatureOverrideStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// LayerList contains a list of Layer
-type LayerList struct {
+// FeatureOverrideList contains a list of FeatureOverride
+type FeatureOverrideList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Layer `json:"items"`
+	Items           []FeatureOverride `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Layer{}, &LayerList{})
+	SchemeBuilder.Register(&FeatureOverride{}, &FeatureOverrideList{})
 }
