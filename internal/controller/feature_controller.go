@@ -22,12 +22,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"github.com/middlewaregruppen/banana-controller/pkg/config"
 
 	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 )
@@ -69,15 +70,11 @@ var (
 type FeatureReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Config config.Config
 }
 
 func init() {
 	metrics.Registry.MustRegister(featuresTotalCounter, featuresErrorCounter)
-}
-
-func logError(feature *bananav1alpha1.Feature, s string, l logr.Logger, err error) {
-	featuresErrorCounter.WithLabelValues(feature.GetName(), err.Error()).Inc()
-	l.Error(err, s)
 }
 
 type bananaTraceIdKey string
@@ -109,12 +106,13 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Add finalizers that will be handled later during delete events
-	if !controllerutil.ContainsFinalizer(feat, featureSetFinalizers) {
-		if ok := controllerutil.AddFinalizer(feat, featureSetFinalizers); !ok {
+	// Add finalizers that will be handled later during delete events.
+	// Only add finalizers if the resource doesn't contain a finalizer and it's not marked for delettion
+	if !controllerutil.ContainsFinalizer(feat, featureFinalizers) && feat.ObjectMeta.DeletionTimestamp.IsZero() {
+		if ok := controllerutil.AddFinalizer(feat, featureFinalizers); !ok {
 			return ctrl.Result{Requeue: true}, nil
 		}
-		controllerutil.AddFinalizer(feat, featureSetFinalizers)
+		controllerutil.AddFinalizer(feat, featureFinalizers)
 		if err := r.Update(ctx, feat); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -134,15 +132,8 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, r.finalize(ctx, feat)
 	}
 
-	// Apply layers if any matches. Errors will be ignore because we don't want to stop reconciling
-	layers, err := r.ensureLayers(ctx, feat)
-	if err != nil {
-		logError(feat, "failed ensuring layers, will continue to reconcile and ignore applying layers to this feature", l, err)
-	}
-
 	// Check if Argo Application exists, if not create a new one
-	err = r.ensureArgoApp(ctx, feat, layers)
-	if err != nil {
+	if err := r.ensureArgoApp(ctx, r.Client, feat); err != nil && !errors.IsNotFound(err) {
 		logError(feat, "could not reconcile Application", l, err)
 		err = fmt.Errorf("could not reconcile Application: %w", err)
 		readyCondition := metav1.Condition{
@@ -174,40 +165,50 @@ func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1al
 	meta.SetStatusCondition(&feat.Status.Conditions, readyCondition)
 }
 
-func (r *FeatureReconciler) ensureLayers(ctx context.Context, feature *bananav1alpha1.Feature) ([]*bananav1alpha1.FeatureOverride, error) {
-	layers := bananav1alpha1.FeatureOverrideList{}
-	err := r.List(ctx, &layers)
+func (r *FeatureReconciler) ensureFeatureOverrides(ctx context.Context, c client.Client, feature *bananav1alpha1.Feature, p *Patcher) error {
+
+	overrides := &bananav1alpha1.FeatureOverrideList{}
+	err := c.List(ctx, overrides)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var lres []*bananav1alpha1.FeatureOverride
-	if layers.Items != nil {
-		for _, l := range layers.Items {
-			if l.Spec.Match.Name == feature.Spec.Name && l.Spec.Match.Repo == feature.Spec.Repo {
-				lres = append(lres, &l)
+	if overrides.Items != nil {
+		for _, override := range overrides.Items {
+			o := override
+			selector := labels.SelectorFromSet(o.Spec.FeatureSelector.MatchLabels)
+			l := labels.Set{}
+			l = feature.Labels
+			if selector.Matches(l) {
+				p.Add(override.Spec.Values)
 			}
 		}
 	}
-	return lres, nil
+	return nil
 }
 
-func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) error {
+func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, c client.Client, feature *bananav1alpha1.Feature) error {
 	k := bananaTraceIdKey("banana-trace-id")
 	l := log.FromContext(ctx).WithName(ctx.Value(k).(string))
+
+	// Create a patcher for this feature
+	p := NewPatcherFor(feature.Spec.Values)
+
 	// Get the Argo App by it's name. Create an app if nothing is found
 	l.Info("will try to get Application", "name", feature.Name, "Namespace", feature.Namespace)
 	currentApp, err := r.getArgoApp(ctx, types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace})
 	if err != nil {
 		return err
 	}
+
 	if currentApp == nil {
 		l.Info("current Application not found. It probably doesn't exist, creating a new one", "name", feature.Name, "namespace", feature.Namespace)
 		feature.Status.SyncStatus = ArgoApplicationStatusProgressing
-		newApp := r.constructArgoApp(feature, layers)
+		newApp := r.constructArgoApp(feature, nil)
 		if err := controllerutil.SetControllerReference(feature, newApp, r.Scheme); err != nil {
 			return err
 		}
+
 		err := applyRuntimeObject(ctx, types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace}, newApp, r.Client)
 		if err != nil {
 			feature.Status.SyncStatus = ArgoApplicationStatusDegraded
@@ -216,66 +217,58 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, feature *bananav1
 		return nil
 	}
 
+	err = r.ensureFeatureOverrides(ctx, c, feature, p)
+	if err != nil {
+		return err
+	}
+
+	values, err := p.Build()
+	if err != nil {
+		return err
+	}
+
 	// Check if the Argo App needs updating by comparing their Specs
-	newApp := r.constructArgoApp(feature, layers)
-	if r.needsUpdate(newApp, currentApp) {
+	newApp := r.constructArgoApp(feature, values)
+	if r.needsUpdate(currentApp, newApp) {
 		l.Info("application needs updating", "name", feature.Name, "namespace", feature.Namespace)
 		currentApp.Spec = newApp.Spec
 		return r.Update(ctx, currentApp)
 	}
 
 	// Update statuses
-	updateStatus(feature, currentApp, layers)
+	updateStatus(feature, currentApp)
 
 	return nil
 }
 
-func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application, layers []*bananav1alpha1.FeatureOverride) {
+func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application) {
 	// Update statuses
 	feature.Status.SyncStatus = string(app.Status.Sync.Status)
 	feature.Status.HealthStatus = string(app.Status.Health.Status)
 	feature.Status.Images = app.Status.Summary.Images
 	feature.Status.URLs = app.Status.Summary.ExternalURLs
-
-	// Update LayerRef status
-	var refs []string
-	for _, f := range layers {
-		refs = append(refs, f.Name)
-	}
-	feature.Status.LayerRef = refs
 }
 
-func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, layers []*bananav1alpha1.FeatureOverride) *argov1alpha1.Application {
+func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b *runtime.RawExtension) *argov1alpha1.Application {
 	proj := feature.Spec.Project
 	if len(feature.Spec.Project) == 0 {
 		proj = "default"
 	}
 
-	// First item in list is the chart itself
-	sources := []argov1alpha1.ApplicationSource{
-		{
-			RepoURL:        feature.Spec.Repo,
-			Path:           feature.Spec.Path,
-			Chart:          feature.Spec.Name,
-			TargetRevision: feature.Spec.Revision,
-			Helm: &argov1alpha1.ApplicationSourceHelm{
-				Parameters: feature.Spec.Values,
-			},
-		},
+	values := b
+	if b == nil {
+		values = &runtime.RawExtension{}
 	}
 
-	// Next, we add additional layers
-	for _, l := range layers {
-		layer := argov1alpha1.ApplicationSource{
-			RepoURL:        feature.Spec.Repo,
-			Path:           feature.Spec.Path,
-			Chart:          feature.Spec.Name,
-			TargetRevision: feature.Spec.Revision,
-			Helm: &argov1alpha1.ApplicationSourceHelm{
-				ValuesObject: l.Spec.Values,
-			},
-		}
-		sources = append(sources, layer)
+	// First item in list is the chart itself
+	source := &argov1alpha1.ApplicationSource{
+		RepoURL:        feature.Spec.Repo,
+		Path:           feature.Spec.Path,
+		Chart:          feature.Spec.Name,
+		TargetRevision: feature.Spec.Revision,
+		Helm: &argov1alpha1.ApplicationSourceHelm{
+			ValuesObject: values,
+		},
 	}
 
 	// Return the constructed multi-source argocd application
@@ -293,22 +286,15 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, la
 				Namespace: feature.Spec.Namespace,
 				Server:    "https://kubernetes.default.svc",
 			},
-			// Source: &argov1alpha1.ApplicationSource{
-			// 	RepoURL:        feature.Spec.Repo,
-			// 	Path:           feature.Spec.Path,
-			// 	Chart:          feature.Spec.Name,
-			// 	TargetRevision: feature.Spec.Revision,
-			// 	Helm: &argov1alpha1.ApplicationSourceHelm{
-			// 		Parameters: feature.Spec.Values,
-			// 	},
-			// },
-			Sources:    sources,
+			Source:     source,
 			SyncPolicy: &feature.Spec.SyncPolicy,
 		},
 	}
 }
 
+// Checkout https://pkg.go.dev/github.com/google/go-cmp/cmp
 func (r *FeatureReconciler) needsUpdate(old, new *argov1alpha1.Application) bool {
+
 	return !reflect.DeepEqual(old.Spec, new.Spec)
 }
 
@@ -326,22 +312,16 @@ func (r *FeatureReconciler) getArgoApp(ctx context.Context, name types.Namespace
 
 func (r *FeatureReconciler) finalize(ctx context.Context, feat *bananav1alpha1.Feature) error {
 	// Perform finalizers before deleting resource from cluster
-	if controllerutil.ContainsFinalizer(feat, featureSetFinalizers) {
+	if controllerutil.ContainsFinalizer(feat, featureFinalizers) {
 
 		// TODO: run finalizers here. Always delete resources that belong to this CRD before proceeding further
-		// Delete all features managed by this featureset
+		// Delete all features managed by this featureset.
 		argoapp := &argov1alpha1.Application{}
-		err := r.Get(ctx, types.NamespacedName{Name: feat.Name, Namespace: feat.Namespace}, argoapp)
-		if err != nil {
-			return err
+		if err := r.Get(ctx, types.NamespacedName{Name: feat.Name, Namespace: feat.Namespace}, argoapp); err == nil {
+			return r.Delete(ctx, argoapp)
 		}
 
-		err = r.Delete(ctx, argoapp)
-		if err != nil {
-			return err
-		}
-
-		controllerutil.RemoveFinalizer(feat, featureSetFinalizers)
+		controllerutil.RemoveFinalizer(feat, featureFinalizers)
 		return r.Update(ctx, feat)
 
 	}
@@ -349,7 +329,8 @@ func (r *FeatureReconciler) finalize(ctx context.Context, feat *bananav1alpha1.F
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager, cfg config.Config) error {
+	r.Config = cfg
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&bananav1alpha1.Feature{}).
 		Owns(&argov1alpha1.Application{}).

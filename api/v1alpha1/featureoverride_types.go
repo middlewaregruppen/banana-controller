@@ -29,7 +29,10 @@ type FeatureOverrideSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Match  Match                 `json:"match,omitempty"`
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
+	FeatureSelector   *metav1.LabelSelector `json:"featureSelector,omitempty"`
+
+	//Match  Match                 `json:"match,omitempty"`
 	Values *runtime.RawExtension `json:"values,omitempty" protobuf:"bytes,10,opt,name=values"`
 }
 
@@ -46,6 +49,7 @@ type Match struct {
 type FeatureOverrideStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	FeatureRefs []string `json:"featureRefs,omitempty"`
 }
 
 //+kubebuilder:object:root=true

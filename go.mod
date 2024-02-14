@@ -12,6 +12,8 @@ require (
 
 require github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 
+require dario.cat/mergo v1.0.0 // indirect
+
 require (
 	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
