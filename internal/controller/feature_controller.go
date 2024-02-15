@@ -177,8 +177,7 @@ func (r *FeatureReconciler) ensureFeatureOverrides(ctx context.Context, c client
 		for _, override := range overrides.Items {
 			o := override
 			selector := labels.SelectorFromSet(o.Spec.FeatureSelector.MatchLabels)
-			l := labels.Set{}
-			l = feature.Labels
+			l := labels.Set(feature.Labels)
 			if selector.Matches(l) {
 				p.Add(override.Spec.Values)
 			}

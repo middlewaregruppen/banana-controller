@@ -46,42 +46,13 @@ func needsUpdate(generated, current *bananav1alpha1.Feature) bool {
 }
 
 func logError(obj client.Object, s string, l logr.Logger, err error) {
-	switch obj.(type) {
+	switch t := obj.(type) {
 	case *bananav1alpha1.Feature:
-		featuresErrorCounter.WithLabelValues(obj.(*bananav1alpha1.Feature).GetName(), err.Error()).Inc()
+		featuresErrorCounter.WithLabelValues(t.GetName(), err.Error()).Inc()
 		l.Error(err, s)
 	case *bananav1alpha1.FeatureOverride:
 		// TODO: Change to featureOVERRIDE counter
-		featuresErrorCounter.WithLabelValues(obj.(*bananav1alpha1.FeatureOverride).GetName(), err.Error()).Inc()
+		featuresErrorCounter.WithLabelValues(t.GetName(), err.Error()).Inc()
 		l.Error(err, s)
 	}
 }
-
-// type fieldIndex struct {
-// 	key string
-// 	obj client.Object
-// 	fn  client.IndexerFunc
-// }
-
-// type fieldIndexers map[string]fieldIndex
-
-// var Indexers fieldIndexers = make(fieldIndexers)
-
-// func AddIndexer(fi ...fieldIndex) error {
-// 	for _, i := range fi {
-// 		Indexers[i.key] = i
-// 	}
-// 	return nil
-// }
-
-// func (f *fieldIndex) Object() client.Object {
-// 	return f.obj
-// }
-
-// func (f *fieldIndex) IndexerFunc() client.IndexerFunc {
-// 	return f.fn
-// }
-
-// func (f *fieldIndex) Key() string {
-// 	return f.key
-// }
