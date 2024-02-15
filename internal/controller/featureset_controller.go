@@ -34,20 +34,6 @@ import (
 	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 )
 
-// Definitions to manage status conditions
-const (
-	// TypeFeatureSetAvailable represents the status of the HelmChart reconciliation
-	TypeFeatureSetAvailable = "Available"
-
-	// ReasonReconciliationFailed
-	ReasonReconciliationFailed = "ReconciliationFailed"
-
-	// ReasonReconciliationSucceeded
-	ReasonReconciliationSucceeded = "ReconciliationSucceeded"
-
-	featureSetFinalizers = "banana.mdlwr.com/finalizer"
-)
-
 // FeatureSetReconciler reconciles a FeatureSet object
 type FeatureSetReconciler struct {
 	client.Client
@@ -216,25 +202,6 @@ func (r *FeatureSetReconciler) finalize(ctx context.Context, featset *bananav1al
 
 	}
 	return nil
-}
-
-func applyRuntimeObject(ctx context.Context, key client.ObjectKey, obj client.Object, c client.Client) error {
-	getObj := obj
-	switch err := c.Get(ctx, key, getObj); {
-	case errors.IsNotFound(err):
-		return c.Create(ctx, obj)
-	case err == nil:
-		return c.Update(ctx, obj)
-	default:
-		return err
-	}
-}
-
-func needsUpdate(generated, current *bananav1alpha1.Feature) bool {
-	// if !reflect.DeepEqual(generated.Spec.Helm, current.Spec.Helm) {
-	// 	return true
-	// }
-	return false
 }
 
 func (r *FeatureSetReconciler) decorateFeatureWith(featureset *bananav1alpha1.FeatureSet, intermediate *bananav1alpha1.IntermediateFeature) *bananav1alpha1.Feature {

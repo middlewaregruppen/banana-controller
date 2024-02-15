@@ -1,94 +1,47 @@
 # banana-controller
-Banana is a pattern which allows teams to utilize Kubernetes services through GitOps but without all the complexities it would otherwise introduce. It creates an abstraction layer that enables teams declaratively describe services they want to use, without beeing invasive.  
+[![Go](https://github.com/middlewaregruppen/banana-controller/actions/workflows/go.yaml/badge.svg)](https://github.com/middlewaregruppen/banana-controller/actions/workflows/go.yaml)
+
+---
+
+Banana is a pattern which allows teams to utilize Kubernetes services through GitOps without all the complexities it would otherwise introduce. It creates an abstraction layer that enables teams to declaratively describe services they want to use, without interfering with their development workflow.
+
+**Work in progress** *banana is still under active development and most features are still in an idéa phase. Please check in from time to time for follow the progress* 🧡
 
 ## Description
-GitOps is awesome, tools like ArgoCD and Flux are amazing and we love them. But many teams struggle 
+GitOps is awesome, tools like ArgoCD and Flux are amazing and we love them. But many teams struggle to implement this concept into their workflow for many reasons. A few of them are; They lack the knowledge for the technology required. They want to focus on managing their applications, and not "stuff" around it. They don't feel comfortable making implementation-specific decisions.
+
+Banana focuses on solving these problems by providing the teams a minimal, yet declarative, GitOps-friendly way of listing services they need to exist, which we call `Features`. A feature is typically a Helm chart, but that's all abstracted for the user. Lets imagine that a team wants an ingress controller in their cluster. They create the following:
+```yaml
+--- 
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: Feature
+metadata:
+  name: nginx
+spec:
+  namespace: nginx
+  repo: https://charts.bitnami.com/bitnami
+  name: nginx-ingress-controller
+  revision: 10.3.0
+```
+However, the company in this example requires that all HTTP communication must be secured with their internal SSL certificate. Instead of having all teams configuring NGINX with SSL, the "infra-team" can create a `FeatureOverride`. A `FeatureOverride` is a cluster-scoped, policy-like resource that decorates `Features` with additional configuration before it's applied to the cluster. For example:
+```yaml
+apiVersion: banana.mdlwr.se/v1alpha1
+kind: FeatureOverride
+metadata:
+  name: nginx-default-wildcard-cert
+spec:
+  featureSelector: {}
+  values:
+    extraArgs:
+      default-ssl-certificate: $(POD_NAMESPACE)/wildcard-cert
+```
 
 ## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
-
-### Running on the cluster
-1. Install Instances of Custom Resources:
-
-```sh
-kubectl apply -f config/samples/
+Install on your cluster by first applying the CRD's and then the controller
 ```
-
-2. Build and push your image to the location specified by `IMG`:
-
-```sh
-make docker-build docker-push IMG=<some-registry>/banana-controller:tag
-```
-
-3. Deploy the controller to the cluster with the image specified by `IMG`:
-
-```sh
-make deploy IMG=<some-registry>/banana-controller:tag
-```
-
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
-```
-
-### Undeploy controller
-UnDeploy the controller from the cluster:
-
-```sh
-make undeploy
+kubectl apply -f https://raw.githubusercontent.com/middlewaregruppen/banana-controller/main/deploy/crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/middlewaregruppen/banana-controller/main/deploy/deploy.yaml
 ```
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/),
-which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
-
-### Test It Out
-1. Install the CRDs into the cluster:
-
-```sh
-make install
-```
-
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
-
-```sh
-make run
-```
-
-**NOTE:** You can also run this in one step by running: `make install run`
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
-
-```sh
-make manifests
-```
-
-**NOTE:** Run `make --help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
-## License
-
-Copyright 2024.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+You are welcome to contribute to this project by opening a PR. Create an Issue if you have feedback ❤️

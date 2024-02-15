@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -30,14 +31,15 @@ type FeatureSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name is the name of this feature
-	Name       string                       `json:"name,omitempty"`
-	Namespace  string                       `json:"namespace,omitempty"`
-	Project    string                       `json:"project,omitempty"`
-	Repo       string                       `json:"repo,omitempty"`
-	Path       string                       `json:"path,omitempty"`
-	Revision   string                       `json:"revision,omitempty"`
-	Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
-	SyncPolicy argov1alpha1.SyncPolicy      `json:"syncPolicy,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
+	Project   string `json:"project,omitempty"`
+	Repo      string `json:"repo,omitempty"`
+	Path      string `json:"path,omitempty"`
+	Revision  string `json:"revision,omitempty"`
+	//Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
+	Values     *runtime.RawExtension   `json:"values,omitempty"`
+	SyncPolicy argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
 }
 
 // FeatureStatus defines the observed state of Feature
@@ -50,7 +52,6 @@ type FeatureStatus struct {
 	URLs          []string           `json:"url,omitempty"`
 	Images        []string           `json:"images,omitempty"`
 	NeedsUpdating bool               `json:"needsUpdating,omitempty"`
-	LayerRef      []string           `json:"layerRef,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete

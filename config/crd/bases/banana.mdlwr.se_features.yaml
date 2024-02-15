@@ -131,22 +131,9 @@ spec:
                     type: array
                 type: object
               values:
-                items:
-                  description: HelmParameter is a parameter that's passed to helm
-                    template during manifest generation
-                  properties:
-                    forceString:
-                      description: ForceString determines whether to tell Helm to
-                        interpret booleans and numbers as strings
-                      type: boolean
-                    name:
-                      description: Name is the name of the Helm parameter
-                      type: string
-                    value:
-                      description: Value is the value for the Helm parameter
-                      type: string
-                  type: object
-                type: array
+                description: Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
             type: object
           status:
             description: FeatureStatus defines the observed state of Feature
@@ -225,10 +212,6 @@ spec:
               healthStatus:
                 type: string
               images:
-                items:
-                  type: string
-                type: array
-              layerRef:
                 items:
                   type: string
                 type: array

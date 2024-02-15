@@ -352,7 +352,7 @@ spec:
         - --leader-elect
         command:
         - /banana-controller
-        image: ghcr.io/amimof/banana-controller:v1.0.0-beta.3
+        image: ghcr.io/middlewaregruppen/banana-controller:latest
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

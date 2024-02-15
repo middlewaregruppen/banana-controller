@@ -36,6 +36,7 @@ import (
 
 	bananav1alpha1 "github.com/middlewaregruppen/banana-controller/api/v1alpha1"
 	"github.com/middlewaregruppen/banana-controller/internal/controller"
+	"github.com/middlewaregruppen/banana-controller/pkg/config"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -51,6 +52,12 @@ var (
 	// DATE used to compile. Is set when project is built and should never be set manually
 	DATE string
 
+	printVersion         bool
+	metricsAddr          string
+	enableLeaderElection bool
+	probeAddr            string
+	defaultHelmRepo      string
+
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -65,17 +72,13 @@ func init() {
 }
 
 func main() {
-	var printVersion bool
 
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
 	flag.BoolVar(&printVersion, "version", false, "Print version")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&defaultHelmRepo, "default-helm-repo", "", "The default Helm repository URL to use. If defined, a Feature may specify a chart by it's name without having to provide the URL to a Helm repository.")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -120,6 +123,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctrlConfig := config.Config{
+		DefaultHelmRepo: defaultHelmRepo,
+	}
+
 	if err = (&controller.FeatureSetReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -130,14 +137,14 @@ func main() {
 	if err = (&controller.FeatureReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, ctrlConfig); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feature")
 		os.Exit(1)
 	}
 	if err = (&controller.FeatureOverrideReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, ctrlConfig); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "FeatureOverride")
 		os.Exit(1)
 	}
