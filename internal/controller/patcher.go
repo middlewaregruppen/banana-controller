@@ -42,17 +42,20 @@ func compile(obj *runtime.RawExtension) (map[string]interface{}, error) {
 	return s, nil
 }
 
+// Add adds an object to the patcher
 func (p *Patcher) Add(obj *runtime.RawExtension) *Patcher {
 	p.objs = append(p.objs, obj)
 	return p
 }
 
+// Use adds a PatchOption middlware to be used during build
 func (p *Patcher) Use(opt PatchOption) *Patcher {
 	p.opts = append(p.opts, opt)
 	return p
 }
 
-// Build merges all objects added by Add() with the destination object provided in New()
+// Build merges all objects added by Add() and applies all middlwares. Lastly flattened list of objects & middlwares
+// Are merged into the destination object provided by New() returning a final flattend []byte
 func (p *Patcher) Build() ([]byte, error) {
 	dst := map[string]interface{}{}
 
@@ -85,7 +88,6 @@ func (p *Patcher) Build() ([]byte, error) {
 	}
 
 	p.original = &runtime.RawExtension{Raw: b}
-	fmt.Println(string(b))
 
 	// Apply middleware
 	for _, opt := range p.opts {
@@ -99,6 +101,7 @@ func (p *Patcher) Build() ([]byte, error) {
 	return p.original.Raw, nil
 }
 
+// JsonPatch6902 is a PatchOption that performs Json 6902 patch operations on the original object based on the provided patch type
 func JsonPatch6902(patches ...*bananav1alpha1.Patch) PatchOption {
 	return func(p *Patcher) ([]byte, error) {
 		b := p.original.Raw
@@ -117,6 +120,7 @@ func JsonPatch6902(patches ...*bananav1alpha1.Patch) PatchOption {
 	}
 }
 
+// NewPatcherFor returns a new patcher for the given object. Provide optional PatchOptions if additional operations are desired
 func NewPatcherFor(obj *runtime.RawExtension, opts ...PatchOption) *Patcher {
 	return &Patcher{
 		original: obj,
