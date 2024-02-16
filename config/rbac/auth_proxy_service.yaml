@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/created-by: banana-controller
     app.kubernetes.io/part-of: banana-controller
     app.kubernetes.io/managed-by: kustomize
-  name: controller-manager-metrics-service
+  name: banana-controller-metrics-service
   namespace: system
 spec:
   ports:

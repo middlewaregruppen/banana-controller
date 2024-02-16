@@ -67,10 +67,10 @@ spec:
         #   type: RuntimeDefault
       containers:
       - command:
-        - /manager
+        - /banana-controller
         args:
         - --leader-elect
-        image: controller:latest
+        image: ghcr.io/middlewaregruppen/banana-controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
