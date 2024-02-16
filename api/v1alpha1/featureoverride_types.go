@@ -32,17 +32,14 @@ type FeatureOverrideSpec struct {
 	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
 	FeatureSelector   *metav1.LabelSelector `json:"featureSelector,omitempty"`
 
-	//Match  Match                 `json:"match,omitempty"`
 	Values *runtime.RawExtension `json:"values,omitempty" protobuf:"bytes,10,opt,name=values"`
+	Patch  []*Patch              `json:"patch,omitempty"`
 }
 
-type Match struct {
-	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	Project   string `json:"project,omitempty"`
-	Repo      string `json:"repo,omitempty"`
-	Path      string `json:"path,omitempty"`
-	Revision  string `json:"revision,omitempty"`
+type Patch struct {
+	Op    string `json:"op,omitempty"`
+	Path  string `json:"path,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 // FeatureOverrideStatus defines the observed state of FeatureOverride

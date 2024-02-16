@@ -180,6 +180,9 @@ func (r *FeatureReconciler) ensureFeatureOverrides(ctx context.Context, c client
 			l := labels.Set(feature.Labels)
 			if selector.Matches(l) {
 				p.Add(override.Spec.Values)
+				if override.Spec.Patch != nil {
+					p.Use(JsonPatch6902(override.Spec.Patch...))
+				}
 			}
 		}
 	}
@@ -226,6 +229,8 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, c client.Client, 
 		return err
 	}
 
+	fmt.Println("VALYUES", string(values))
+
 	// Check if the Argo App needs updating by comparing their Specs
 	newApp := r.constructArgoApp(feature, values)
 	if r.needsUpdate(currentApp, newApp) {
@@ -248,7 +253,7 @@ func updateStatus(feature *bananav1alpha1.Feature, app *argov1alpha1.Application
 	feature.Status.URLs = app.Status.Summary.ExternalURLs
 }
 
-func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b *runtime.RawExtension) *argov1alpha1.Application {
+func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b []byte) *argov1alpha1.Application {
 	proj := feature.Spec.Project
 	if len(feature.Spec.Project) == 0 {
 		proj = "default"
@@ -256,7 +261,7 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b 
 
 	values := b
 	if b == nil {
-		values = &runtime.RawExtension{}
+		values = []byte{}
 	}
 
 	// First item in list is the chart itself
@@ -266,7 +271,7 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b 
 		Chart:          feature.Spec.Name,
 		TargetRevision: feature.Spec.Revision,
 		Helm: &argov1alpha1.ApplicationSourceHelm{
-			ValuesObject: values,
+			Values: string(values),
 		},
 	}
 

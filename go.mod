@@ -12,7 +12,7 @@ require (
 
 require github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 
-require dario.cat/mergo v1.0.0 // indirect
+require dario.cat/mergo v1.0.0
 
 require (
 	cloud.google.com/go/compute v1.19.1 // indirect
@@ -43,7 +43,7 @@ require (
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
+	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

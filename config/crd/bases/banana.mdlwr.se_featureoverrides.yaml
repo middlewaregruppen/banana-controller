@@ -130,8 +130,18 @@ spec:
                     type: object
                 type: object
                 x-kubernetes-map-type: atomic
+              patch:
+                items:
+                  properties:
+                    op:
+                      type: string
+                    path:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
               values:
-                description: Match  Match                 `json:"match,omitempty"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object
