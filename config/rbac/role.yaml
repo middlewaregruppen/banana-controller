@@ -103,7 +103,7 @@ rules:
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets
+  - featuresets
   verbs:
   - create
   - delete
@@ -115,13 +115,13 @@ rules:
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets/finalizers
+  - featuresets/finalizers
   verbs:
   - update
 - apiGroups:
   - banana.mdlwr.se
   resources:
-  - featuressets/status
+  - featuresets/status
   verbs:
   - get
   - patch

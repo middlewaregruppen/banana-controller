@@ -54,18 +54,19 @@ type FeatureStatus struct {
 	NeedsUpdating bool               `json:"needsUpdating,omitempty"`
 }
 
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/finalizers,verbs=update
-//+kubebuilder:rbac:groups=argoproj.io,resources=applications,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=argoproj.io,resources=applications/status,verbs=get
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.syncStatus"
 // +kubebuilder:printcolumn:name="Health",type="string",JSONPath=".status.healthStatus"
 // +kubebuilder:printcolumn:name="URL",type="string",JSONPath=".status.url[0]"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/finalizers,verbs=update
+// +kubebuilder:rbac:groups=argoproj.io,resources=applications,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=argoproj.io,resources=applications/status,verbs=get
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides/status,verbs=get
 
 // Feature is the Schema for the features API
 type Feature struct {

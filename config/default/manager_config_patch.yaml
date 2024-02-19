@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller
-  namespace: system
+  name: banana-controller
+  namespace: banana-system
 spec:
   template:
     spec:

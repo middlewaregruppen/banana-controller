@@ -48,21 +48,16 @@ type FeatureSetStatus struct {
 	NumFeaturesAvailable int `json:"numFeaturesAvailable,omitempty"`
 }
 
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuressets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuressets/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuressets/finalizers,verbs=update
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get
-
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".status.numFeaturesDesired"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.numFeaturesReady"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuresets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuresets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=banana.mdlwr.se,resources=featuresets/finalizers,verbs=update
 
 // FeatureSet is the Schema for the featuresets API
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 type FeatureSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
