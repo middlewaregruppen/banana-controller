@@ -38,8 +38,8 @@ type FeatureSpec struct {
 	Path      string `json:"path,omitempty"`
 	Revision  string `json:"revision,omitempty"`
 	//Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
-	Values     *runtime.RawExtension   `json:"values,omitempty"`
-	SyncPolicy argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
+	Values     *runtime.RawExtension    `json:"values,omitempty"`
+	SyncPolicy *argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
 }
 
 // FeatureStatus defines the observed state of Feature

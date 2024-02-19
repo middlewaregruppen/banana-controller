@@ -70,7 +70,7 @@ var (
 type FeatureReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Config config.Config
+	Config *config.Config
 }
 
 func init() {
@@ -266,7 +266,7 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b 
 
 	// First item in list is the chart itself
 	source := &argov1alpha1.ApplicationSource{
-		RepoURL:        feature.Spec.Repo,
+		RepoURL:        getRepoURL(feature, r.Config),
 		Path:           feature.Spec.Path,
 		Chart:          feature.Spec.Name,
 		TargetRevision: feature.Spec.Revision,
@@ -291,7 +291,7 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b 
 				Server:    "https://kubernetes.default.svc",
 			},
 			Source:     source,
-			SyncPolicy: &feature.Spec.SyncPolicy,
+			SyncPolicy: getArgoSyncPolicy(feature),
 		},
 	}
 }
@@ -333,7 +333,7 @@ func (r *FeatureReconciler) finalize(ctx context.Context, feat *bananav1alpha1.F
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager, cfg config.Config) error {
+func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager, cfg *config.Config) error {
 	r.Config = cfg
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&bananav1alpha1.Feature{}).
