@@ -35,7 +35,7 @@ import (
 type FeatureOverrideReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Config config.Config
+	Config *config.Config
 }
 
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=featureoverrides,verbs=get;list;watch;create;update;patch;delete
@@ -124,7 +124,7 @@ func (r *FeatureOverrideReconciler) finalize(ctx context.Context, feat *bananav1
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FeatureOverrideReconciler) SetupWithManager(mgr ctrl.Manager, cfg config.Config) error {
+func (r *FeatureOverrideReconciler) SetupWithManager(mgr ctrl.Manager, cfg *config.Config) error {
 	r.Config = cfg
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&bananav1alpha1.FeatureOverride{}).
