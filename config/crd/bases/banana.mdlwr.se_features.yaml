@@ -47,6 +47,8 @@ spec:
           spec:
             description: FeatureSpec defines the desired state of Feature
             properties:
+              insecure:
+                type: boolean
               name:
                 description: Name is the name of this feature
                 type: string
@@ -131,7 +133,6 @@ spec:
                     type: array
                 type: object
               values:
-                description: Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object

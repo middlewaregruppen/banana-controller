@@ -140,26 +140,26 @@ func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Status:             metav1.ConditionFalse,
 			Reason:             ReasonReconciliationFailed,
 			Message:            err.Error(),
-			Type:               TypeFeatureSetAvailable,
+			Type:               TypeFeatureAvailable,
 			ObservedGeneration: feat.GetGeneration(),
 		}
 		meta.SetStatusCondition(&feat.Status.Conditions, readyCondition)
 		return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 60}, err
 	}
 
-	r.setReadyStatus(ctx, feat)
+	r.setReadyStatus(feat)
 	l.Info("successfully reconciled feature")
 	featuresTotalCounter.WithLabelValues(feat.GetName(), "reconciled").Inc()
 
 	return ctrl.Result{}, nil
 }
 
-func (r *FeatureReconciler) setReadyStatus(ctx context.Context, feat *bananav1alpha1.Feature) {
+func (r *FeatureReconciler) setReadyStatus(feat *bananav1alpha1.Feature) {
 	readyCondition := metav1.Condition{
 		Status:             metav1.ConditionTrue,
 		Reason:             ReasonReconciliationSucceeded,
 		Message:            "All Applications are in ready state",
-		Type:               TypeFeatureSetAvailable,
+		Type:               TypeFeatureAvailable,
 		ObservedGeneration: feat.GetGeneration(),
 	}
 	meta.SetStatusCondition(&feat.Status.Conditions, readyCondition)
@@ -319,7 +319,7 @@ func (r *FeatureReconciler) finalize(ctx context.Context, feat *bananav1alpha1.F
 	if controllerutil.ContainsFinalizer(feat, featureFinalizers) {
 
 		// TODO: run finalizers here. Always delete resources that belong to this CRD before proceeding further
-		// Delete all features managed by this featureset.
+		// Delete all features managed by this feature.
 		argoapp := &argov1alpha1.Application{}
 		if err := r.Get(ctx, types.NamespacedName{Name: feat.Name, Namespace: feat.Namespace}, argoapp); err == nil {
 			return r.Delete(ctx, argoapp)

@@ -13,8 +13,8 @@ import (
 
 // Definitions to manage status conditions
 const (
-	// TypeFeatureSetAvailable represents the status of the HelmChart reconciliation
-	TypeFeatureSetAvailable = "Available"
+	// TypeFeatureAvailable represents the status of the HelmChart reconciliation
+	TypeFeatureAvailable = "Available"
 
 	// ReasonReconciliationFailed
 	ReasonReconciliationFailed = "ReconciliationFailed"
@@ -23,7 +23,6 @@ const (
 	ReasonReconciliationSucceeded = "ReconciliationSucceeded"
 
 	// Finalizers
-	featureSetFinalizers      = "finalizer.banana.mdlwr.com/featureset"
 	featureFinalizers         = "finalizer.banana.mdlwr.com/feature"
 	featureOverrideFinalizers = "finalizer.banana.mdlwr.com/featureoverride"
 )
@@ -38,13 +37,6 @@ func applyRuntimeObject(ctx context.Context, key client.ObjectKey, obj client.Ob
 	default:
 		return err
 	}
-}
-
-func needsUpdate(generated, current *bananav1alpha1.Feature) bool {
-	// if !reflect.DeepEqual(generated.Spec.Helm, current.Spec.Helm) {
-	// 	return true
-	// }
-	return false
 }
 
 func logError(obj client.Object, s string, l logr.Logger, err error) {

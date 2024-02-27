@@ -31,13 +31,13 @@ type FeatureSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name is the name of this feature
-	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	Project   string `json:"project,omitempty"`
-	Repo      string `json:"repo,omitempty"`
-	Path      string `json:"path,omitempty"`
-	Revision  string `json:"revision,omitempty"`
-	//Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
+	Name       string                   `json:"name,omitempty"`
+	Namespace  string                   `json:"namespace,omitempty"`
+	Project    string                   `json:"project,omitempty"`
+	Repo       string                   `json:"repo,omitempty"`
+	Path       string                   `json:"path,omitempty"`
+	Revision   string                   `json:"revision,omitempty"`
+	Insecure   bool                     `json:"insecure,omitempty"`
 	Values     *runtime.RawExtension    `json:"values,omitempty"`
 	SyncPolicy *argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
 }
