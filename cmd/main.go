@@ -127,13 +127,6 @@ func main() {
 		DefaultHelmRepo: defaultHelmRepo,
 	}
 
-	if err = (&controller.FeatureSetReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "FeatureSet")
-		os.Exit(1)
-	}
 	if err = (&controller.FeatureReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
