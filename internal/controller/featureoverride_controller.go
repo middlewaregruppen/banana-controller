@@ -74,18 +74,13 @@ func (r *FeatureOverrideReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	// Iterate over all features that this featureoverride is selecting and then add them to the status field
 	featureRefs := []string{}
-	features := &bananav1alpha1.FeatureList{}
-	err := r.List(ctx, features, &client.ListOptions{
-		LabelSelector: labels.SelectorFromSet(featovr.Spec.FeatureSelector.MatchLabels),
-	})
+	features, err := r.getFeaturesForOverride(ctx, featovr)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if features.Items != nil {
-		for _, feature := range features.Items {
-			fName := types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace}
-			featureRefs = append(featureRefs, fName.String())
-		}
+	for _, feature := range features {
+		fName := types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace}
+		featureRefs = append(featureRefs, fName.String())
 	}
 	featovr.Status.FeatureRefs = featureRefs
 
@@ -107,6 +102,23 @@ func (r *FeatureOverrideReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	featuresTotalCounter.WithLabelValues(featovr.GetName(), "reconciled").Inc()
 
 	return ctrl.Result{}, nil
+}
+
+func (r *FeatureOverrideReconciler) getFeaturesForOverride(ctx context.Context, override *bananav1alpha1.FeatureOverride) ([]*bananav1alpha1.Feature, error) {
+	res := []*bananav1alpha1.Feature{}
+	features := &bananav1alpha1.FeatureList{}
+	err := r.List(ctx, features, &client.ListOptions{
+		LabelSelector: labels.SelectorFromSet(override.Spec.FeatureSelector.MatchLabels),
+	})
+	if err != nil {
+		return res, err
+	}
+	if features.Items != nil {
+		for _, feature := range features.Items {
+			res = append(res, &feature)
+		}
+	}
+	return res, nil
 }
 
 func (r *FeatureOverrideReconciler) finalize(ctx context.Context, feat *bananav1alpha1.FeatureOverride) error {
