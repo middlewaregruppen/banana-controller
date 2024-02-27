@@ -22,30 +22,41 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // FeatureSpec defines the desired state of Feature
 type FeatureSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name is the name of this feature
-	Name       string                   `json:"name,omitempty"`
-	Namespace  string                   `json:"namespace,omitempty"`
-	Project    string                   `json:"project,omitempty"`
-	Repo       string                   `json:"repo,omitempty"`
-	Path       string                   `json:"path,omitempty"`
-	Revision   string                   `json:"revision,omitempty"`
-	Insecure   bool                     `json:"insecure,omitempty"`
-	Values     *runtime.RawExtension    `json:"values,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	// Namespace is the namespace of the ArgoCD Application provisioned by the Feature controller
+	Namespace string `json:"namespace,omitempty"`
+
+	// Project is the ArgoCD project name
+	Project string `json:"project,omitempty"`
+
+	// Repo is the repository URL passed to the provisioned ArgoCD Application
+	Repo string `json:"repo,omitempty"`
+
+	// Path is the folder path passed to the provisioned ArgoCD Application
+	Path string `json:"path,omitempty"`
+
+	// Revision is the revision passed to the provisioned ArgoCD Application
+	Revision string `json:"revision,omitempty"`
+
+	// Values is the Helm Values passed to the provisioned ArgoCD Application
+	Values *runtime.RawExtension `json:"values,omitempty"`
+
+	// SyncPolicy is the ArgoCD Application
 	SyncPolicy *argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
+
+	// Labels is a set of key value pairs that will exist on the provisioned ArgoCD Application
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // FeatureStatus defines the observed state of Feature
 type FeatureStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	Conditions    []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 	SyncStatus    string             `json:"syncStatus,omitempty"`
 	HealthStatus  string             `json:"healthStatus,omitempty"`
