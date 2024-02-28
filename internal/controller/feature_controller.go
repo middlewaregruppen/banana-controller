@@ -33,8 +33,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/middlewaregruppen/banana-controller/pkg/config"
@@ -229,8 +231,6 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, c client.Client, 
 		return err
 	}
 
-	fmt.Println("VALYUES", string(values))
-
 	// Check if the Argo App needs updating by comparing their Specs
 	newApp := r.constructArgoApp(feature, values)
 	if r.needsUpdate(currentApp, newApp) {
@@ -338,5 +338,14 @@ func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager, cfg *config.Confi
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&bananav1alpha1.Feature{}).
 		Owns(&argov1alpha1.Application{}).
+		Watches(
+			&source.Kind{Type: &bananav1alpha1.FeatureOverride{}},
+			handler.Funcs{
+				CreateFunc:  createFunc(r.Client),
+				UpdateFunc:  updateFunc(r.Client),
+				DeleteFunc:  deleteFunc(r.Client),
+				GenericFunc: genericFunc(r.Client),
+			},
+		).
 		Complete(r)
 }
