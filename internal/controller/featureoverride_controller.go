@@ -23,7 +23,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/middlewaregruppen/banana-controller/pkg/config"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -74,18 +73,13 @@ func (r *FeatureOverrideReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	// Iterate over all features that this featureoverride is selecting and then add them to the status field
 	featureRefs := []string{}
-	features := &bananav1alpha1.FeatureList{}
-	err := r.List(ctx, features, &client.ListOptions{
-		LabelSelector: labels.SelectorFromSet(featovr.Spec.FeatureSelector.MatchLabels),
-	})
+	features, err := getFeaturesForOverride(ctx, r.Client, types.NamespacedName{Name: featovr.Name})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if features.Items != nil {
-		for _, feature := range features.Items {
-			fName := types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace}
-			featureRefs = append(featureRefs, fName.String())
-		}
+	for _, feature := range features {
+		fName := types.NamespacedName{Name: feature.Name, Namespace: feature.Namespace}
+		featureRefs = append(featureRefs, fName.String())
 	}
 	featovr.Status.FeatureRefs = featureRefs
 
@@ -102,6 +96,14 @@ func (r *FeatureOverrideReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		l.Info("resource is marked for deletion, running finalizers", "name", featovr.Name, "namespace", featovr.Namespace)
 		return ctrl.Result{}, r.finalize(ctx, featovr)
 	}
+
+	// Trigger reconciliation of all Features targeted by this FeatureOverride
+	// for _, feature := range features {
+	// 	l.Info("Updating features", "num", len(features))
+	// 	if err := r.Status().Update(ctx, feature); err != nil {
+	// 		return ctrl.Result{}, err
+	// 	}
+	// }
 
 	l.Info("successfully reconciled featureoverride")
 	featuresTotalCounter.WithLabelValues(featovr.GetName(), "reconciled").Inc()

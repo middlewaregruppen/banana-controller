@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,8 +32,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/middlewaregruppen/banana-controller/pkg/config"
@@ -77,8 +78,6 @@ func init() {
 	metrics.Registry.MustRegister(featuresTotalCounter, featuresErrorCounter)
 }
 
-type bananaTraceIdKey string
-
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=banana.mdlwr.se,resources=features/finalizers,verbs=update
@@ -93,11 +92,7 @@ type bananaTraceIdKey string
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *FeatureReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	uid, _ := shortid.Generate()
-	k := bananaTraceIdKey("banana-trace-id")
-
-	ctx = context.WithValue(ctx, k, uid)
-	l := log.FromContext(ctx).WithName(uid)
+	l := log.FromContext(ctx)
 
 	// Fetch Feature - This ensures that the cluster has resources of type Feature.
 	// Stops reconciliation if not found, for example if the CRD's has not been applied
@@ -190,8 +185,7 @@ func (r *FeatureReconciler) ensureFeatureOverrides(ctx context.Context, c client
 }
 
 func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, c client.Client, feature *bananav1alpha1.Feature) error {
-	k := bananaTraceIdKey("banana-trace-id")
-	l := log.FromContext(ctx).WithName(ctx.Value(k).(string))
+	l := log.FromContext(ctx)
 
 	// Create a patcher for this feature
 	p := NewPatcherFor(feature.Spec.Values)
@@ -228,8 +222,6 @@ func (r *FeatureReconciler) ensureArgoApp(ctx context.Context, c client.Client, 
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("VALYUES", string(values))
 
 	// Check if the Argo App needs updating by comparing their Specs
 	newApp := r.constructArgoApp(feature, values)
@@ -338,5 +330,14 @@ func (r *FeatureReconciler) SetupWithManager(mgr ctrl.Manager, cfg *config.Confi
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&bananav1alpha1.Feature{}).
 		Owns(&argov1alpha1.Application{}).
+		Watches(
+			&source.Kind{Type: &bananav1alpha1.FeatureOverride{}},
+			handler.Funcs{
+				CreateFunc:  createFunc(r.Client),
+				UpdateFunc:  updateFunc(r.Client),
+				DeleteFunc:  deleteFunc(r.Client),
+				GenericFunc: genericFunc(r.Client),
+			},
+		).
 		Complete(r)
 }

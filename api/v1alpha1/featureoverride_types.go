@@ -51,6 +51,7 @@ type FeatureOverrideStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Cluster
 
 // FeatureOverride is the Schema for the featureoverrides API
 type FeatureOverride struct {

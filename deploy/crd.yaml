@@ -11,7 +11,7 @@ spec:
     listKind: FeatureOverrideList
     plural: featureoverrides
     singular: featureoverride
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
@@ -209,22 +209,36 @@ spec:
           spec:
             description: FeatureSpec defines the desired state of Feature
             properties:
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels is a set of key value pairs that will exist on
+                  the provisioned ArgoCD Application
+                type: object
               name:
                 description: Name is the name of this feature
                 type: string
               namespace:
+                description: Namespace is the namespace of the ArgoCD Application
+                  provisioned by the Feature controller
                 type: string
               path:
+                description: Path is the folder path passed to the provisioned ArgoCD
+                  Application
                 type: string
               project:
+                description: Project is the ArgoCD project name
                 type: string
               repo:
+                description: Repo is the repository URL passed to the provisioned
+                  ArgoCD Application
                 type: string
               revision:
+                description: Revision is the revision passed to the provisioned ArgoCD
+                  Application
                 type: string
               syncPolicy:
-                description: SyncPolicy controls when a sync will be performed in
-                  response to updates in git
+                description: SyncPolicy is the ArgoCD Application
                 properties:
                   automated:
                     description: Automated will keep an application synced to the
@@ -293,7 +307,8 @@ spec:
                     type: array
                 type: object
               values:
-                description: Values     []argov1alpha1.HelmParameter `json:"values,omitempty"`
+                description: Values is the Helm Values passed to the provisioned ArgoCD
+                  Application
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object
@@ -301,9 +316,6 @@ spec:
             description: FeatureStatus defines the observed state of Feature
             properties:
               conditions:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
