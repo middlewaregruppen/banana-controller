@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 1.0.0-beta.5
+VERSION ?= 1.0.0-beta.6
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -96,10 +96,10 @@ help: ## Display this help.
 ##@ Development
 DATE    ?= $(shell date +%FT%T%z)
 MODULE   = $(shell env GO111MODULE=on $(GO) list -m)
-VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || \
+GITTAG ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || \
 			cat $(CURDIR)/.version 2> /dev/null || echo v0)
-COMMIT=$(shell git rev-parse HEAD)
-BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+GITCOMMIT=$(shell git rev-parse HEAD)
+GITBRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GOVERSION=$(shell go version | awk -F\go '{print $$3}' | awk '{print $$1}')
 GO			 = go
 M = $(shell printf "\033[34;1m➜\033[0m")
@@ -174,7 +174,7 @@ clean: ; $(info $(M) cleaning)	@ ## Cleanup everything
 build: manifests generate fmt vet | $(BIN) ; $(info $(M) building executable to $(BUILDPATH)) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
-		-ldflags '-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH} -X main.GOVERSION=${GOVERSION} -X main.DATE=${DATE}' \
+		-ldflags '-X main.VERSION=${GITTAG} -X main.COMMIT=${GITCOMMIT} -X main.BRANCH=${GITBRANCH} -X main.GOVERSION=${GOVERSION} -X main.DATE=${DATE}' \
 		-o $(BUILDPATH) cmd/main.go
 
 .PHONY: run
