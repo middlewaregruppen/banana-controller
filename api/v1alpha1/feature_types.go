@@ -42,14 +42,17 @@ type FeatureSpec struct {
 	// Path is the folder path passed to the provisioned ArgoCD Application
 	Path string `json:"path,omitempty"`
 
-	// Revision is the revision passed to the provisioned ArgoCD Application
-	Revision string `json:"revision,omitempty"`
+	// Version is the version passed to the provisioned ArgoCD Application
+	Version string `json:"version,omitempty"`
 
 	// Values is the Helm Values passed to the provisioned ArgoCD Application
 	Values *runtime.RawExtension `json:"values,omitempty"`
 
-	// SyncPolicy is the ArgoCD Application
+	// SyncPolicy is used to controll Application sync parameters
 	SyncPolicy *argov1alpha1.SyncPolicy `json:"syncPolicy,omitempty"`
+
+	// DisableAutoSync disables `syncPolicy` by removing it from the Argo Application
+	DisableAutoSync bool `json:"disableAutoSync,omitempty"`
 
 	// Labels is a set of key value pairs that will exist on the provisioned ArgoCD Application
 	Labels map[string]string `json:"labels,omitempty"`

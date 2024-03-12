@@ -59,12 +59,20 @@ func logError(obj client.Object, s string, l logr.Logger, err error) {
 // Returns an ArgoCD Application sync policy using the provided Feature. If sync policy == nil
 // then an automated sync policy with CreateNamespace=true is returned.
 func getArgoSyncPolicy(feature *bananav1alpha1.Feature) *argov1alpha1.SyncPolicy {
+
+	// Ignore setting up sync policy all together if auto sync is disabled
+	if feature.Spec.DisableAutoSync {
+		return nil
+	}
+
+	// Return a automated sync policy by default
 	if feature.Spec.SyncPolicy == nil {
 		return &argov1alpha1.SyncPolicy{
 			Automated:   &argov1alpha1.SyncPolicyAutomated{},
 			SyncOptions: []string{"CreateNamespace=true"},
 		}
 	}
+
 	return feature.Spec.SyncPolicy
 }
 

@@ -261,7 +261,7 @@ func (r *FeatureReconciler) constructArgoApp(feature *bananav1alpha1.Feature, b 
 		RepoURL:        getRepoURL(feature, r.Config),
 		Path:           feature.Spec.Path,
 		Chart:          feature.Spec.Name,
-		TargetRevision: feature.Spec.Revision,
+		TargetRevision: feature.Spec.Version,
 		Helm: &argov1alpha1.ApplicationSourceHelm{
 			Values: string(values),
 		},

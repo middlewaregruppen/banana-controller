@@ -47,6 +47,10 @@ spec:
           spec:
             description: FeatureSpec defines the desired state of Feature
             properties:
+              disableAutoSync:
+                description: DisableAutoSync disables `syncPolicy` by removing it
+                  from the Argo Application
+                type: boolean
               labels:
                 additionalProperties:
                   type: string
@@ -71,12 +75,8 @@ spec:
                 description: Repo is the repository URL passed to the provisioned
                   ArgoCD Application
                 type: string
-              revision:
-                description: Revision is the revision passed to the provisioned ArgoCD
-                  Application
-                type: string
               syncPolicy:
-                description: SyncPolicy is the ArgoCD Application
+                description: SyncPolicy is used to controll Application sync parameters
                 properties:
                   automated:
                     description: Automated will keep an application synced to the
@@ -149,6 +149,10 @@ spec:
                   Application
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              version:
+                description: Version is the version passed to the provisioned ArgoCD
+                  Application
+                type: string
             type: object
           status:
             description: FeatureStatus defines the observed state of Feature
