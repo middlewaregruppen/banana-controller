@@ -71,8 +71,14 @@ func (p *Patcher) Build() ([]byte, error) {
 		}
 	}
 
+	// Use an empty runtime.RawExtension if nil
+	original := p.original
+	if original == nil {
+		original = &runtime.RawExtension{Raw: []byte("{}")}
+	}
+
 	// Now merge into the original runtime.RawExtension
-	m, err := compile(p.original)
+	m, err := compile(original)
 	if err != nil {
 		return nil, err
 	}
